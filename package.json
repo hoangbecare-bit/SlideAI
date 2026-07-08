@@ -15,6 +15,9 @@
     "check": "biome check .",
     "check:fix": "biome check --write .",
     "start": "next start",
+    "test": "vitest run",
+    "ollama:pull": "ollama pull llama3.1",
+    "ollama:run": "ollama run llama3.1",
     "type": "tsc --noEmit"
   },
   "dependencies": {
@@ -211,6 +214,7 @@
     "tailwindcss-animate": "^1.0.7",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.2",
+    "vitest": "^4.1.10",
     "webpack": "^5.97.1"
   },
   "packageManager": "pnpm@11.1.3"
