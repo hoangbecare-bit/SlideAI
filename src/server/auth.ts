@@ -127,9 +127,15 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
         return null;
       },
     }),
-    GoogleProvider({
-      clientId: env.GOOGLE_CLIENT_ID,
-      clientSecret: env.GOOGLE_CLIENT_SECRET,
-    }),
+    // ponytail: Google is optional — only wired up when both creds exist,
+    // so credentials-only deploys (admin login) don't require it.
+    ...(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET
+      ? [
+          GoogleProvider({
+            clientId: env.GOOGLE_CLIENT_ID,
+            clientSecret: env.GOOGLE_CLIENT_SECRET,
+          }),
+        ]
+      : []),
   ],
 });

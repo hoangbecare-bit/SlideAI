@@ -15,8 +15,8 @@ export const env = createEnv({
     TOGETHER_AI_API_KEY: z.string().optional(),
     FAL_API_KEY: z.string().optional(),
     PINECONE_API_KEY: z.string().optional(),
-    GOOGLE_CLIENT_ID: z.string(),
-    GOOGLE_CLIENT_SECRET: z.string(),
+    GOOGLE_CLIENT_ID: z.string().optional(),
+    GOOGLE_CLIENT_SECRET: z.string().optional(),
     UNSPLASH_ACCESS_KEY: z.string().optional(),
     NEXTAUTH_URL: z.preprocess(
       (str) => process.env.NEXTAUTH_URL ?? process.env.VERCEL_URL ?? str,
