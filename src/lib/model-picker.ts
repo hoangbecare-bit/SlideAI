@@ -375,17 +375,23 @@ export function modelPicker(modelProviderOrModel: string, modelId?: string) {
     });
   }
 
-  const selectedOpenAIModel = selection.modelId || "gpt-4o-mini";
+  // OPENAI_MODEL overrides even hardcoded callers (e.g. "gpt-4o-mini") so a
+  // free OpenAI-compatible provider can serve every generation path.
+  const selectedOpenAIModel =
+    env.OPENAI_MODEL?.trim() || selection.modelId || "gpt-4o-mini";
   const openAIApiKey = env.OPENAI_API_KEY?.trim();
+  const openAIBaseURL = env.OPENAI_BASE_URL?.trim();
 
   modelLogger.info("Creating OpenAI model client", {
     provider: selection.provider,
     modelId: selectedOpenAIModel,
     hasApiKey: Boolean(openAIApiKey),
+    baseUrl: openAIBaseURL,
   });
 
   return new ChatOpenAI({
     model: selectedOpenAIModel,
     ...(openAIApiKey ? { apiKey: openAIApiKey } : {}),
+    ...(openAIBaseURL ? { configuration: { baseURL: openAIBaseURL } } : {}),
   });
 }
