@@ -1,0 +1,7 @@
+{
+    "recommendations": [
+        "galacticgit.gemini-chat",
+        "ashishalex.ollama-chat",
+        "anthropic.claude-code"
+    ]
+}

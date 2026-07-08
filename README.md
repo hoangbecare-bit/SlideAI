@@ -222,6 +222,7 @@ ALLWEONE Presentation AI now supports both Ollama and LM Studio as local model p
 
 1. Install [Ollama](https://ollama.com).
 2. Download whichever model you want to use (for example: `ollama pull llama3.1`).
+3. Run a local model session if you want to test locally, for example: `ollama run llama3.1`.
 
 ### Using Local Models in the App
 

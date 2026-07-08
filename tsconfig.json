@@ -8,6 +8,7 @@
     "resolveJsonModule": true,
     "moduleDetection": "force",
     "isolatedModules": true,
+    "baseUrl": ".",
     /* Strictness */
     "strict": true,
     "noUncheckedIndexedAccess": true,
@@ -23,6 +24,7 @@
     "module": "ESNext",
     "moduleResolution": "Bundler",
     "jsx": "react-jsx",
+    "skipLibCheck": true,
     "plugins": [
       {
         "name": "next"
