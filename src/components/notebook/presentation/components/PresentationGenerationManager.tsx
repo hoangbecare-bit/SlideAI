@@ -86,14 +86,15 @@ function hasGeneratedOutline(outline: string[]): boolean {
 }
 
 function parseOutlineItems(content: string): string[] {
-  if (!/^#\s+/m.test(content)) {
+  // Accept any markdown heading level (# .. ######) and normalize back to a
+  // single "# ": the prompt asks for "# " topics but some models (e.g. Llama)
+  // emit ## / ### instead, which would otherwise yield zero outline items.
+  if (!/^#{1,6}[ \t]+/m.test(content)) {
     return [];
   }
 
-  const sections = content.split(/^# /gm).filter(Boolean);
-  return sections.length > 0
-    ? sections.map((section) => `# ${section}`.trim())
-    : [];
+  const sections = content.split(/^#{1,6}[ \t]+/gm).filter((s) => s.trim());
+  return sections.map((section) => `# ${section.trim()}`);
 }
 
 function usesStockSearchForPresentation(
