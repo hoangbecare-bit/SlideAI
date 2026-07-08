@@ -16,7 +16,7 @@ import {
   useLocalModels,
 } from "@/hooks/presentation/useLocalModels";
 import { usePresentationState } from "@/states/presentation-state";
-import { Bot, Cpu, Loader2, Monitor } from "lucide-react";
+import { Bot, Cpu, Loader2, Monitor, Sparkles } from "lucide-react";
 import { useEffect, useRef } from "react";
 
 const modelPickerLogger = createLogger("client:model-picker");
@@ -89,6 +89,30 @@ function getOpenAIModel(modelId: string) {
   );
 }
 
+const CLAUDE_MODELS = [
+  {
+    id: "claude-opus-4-8",
+    label: "Claude Opus 4.8",
+    description: "Anthropic's most capable model for complex presentations",
+  },
+  {
+    id: "claude-sonnet-5",
+    label: "Claude Sonnet 5",
+    description: "Balanced Claude model — near-Opus quality, lower cost",
+  },
+  {
+    id: "claude-haiku-4-5",
+    label: "Claude Haiku 4.5",
+    description: "Fastest, most cost-effective Claude model",
+  },
+] as const;
+
+function getClaudeModel(modelId: string) {
+  return (
+    CLAUDE_MODELS.find((model) => model.id === modelId) ?? CLAUDE_MODELS[0]
+  );
+}
+
 export function ModelPicker({
   shouldShowLabel = true,
 }: {
@@ -109,7 +133,11 @@ export function ModelPicker({
           modelId: savedModel.modelId || "gpt-4o-mini",
         });
         setModelProvider(
-          savedModel.modelProvider as "openai" | "ollama" | "lmstudio",
+          savedModel.modelProvider as
+            | "openai"
+            | "ollama"
+            | "lmstudio"
+            | "anthropic",
         );
         setModelId(savedModel.modelId);
       }
@@ -160,6 +188,10 @@ export function ModelPicker({
       return `lmstudio-${modelId}`;
     }
 
+    if (modelProvider === "anthropic") {
+      return `anthropic-${getClaudeModel(modelId).id}`;
+    }
+
     return `openai-${getOpenAIModel(modelId).id}`;
   };
 
@@ -171,6 +203,13 @@ export function ModelPicker({
       return {
         label: currentModel.label,
         icon: Bot,
+      };
+    }
+
+    if (modelProvider === "anthropic") {
+      return {
+        label: getClaudeModel(modelId).label,
+        icon: Sparkles,
       };
     }
 
@@ -209,6 +248,18 @@ export function ModelPicker({
       setModelProvider("openai");
       setModelId(selectedModel.id);
       setSelectedModel("openai", selectedModel.id);
+      return;
+    }
+
+    if (value.startsWith("anthropic-")) {
+      const selectedModel = getClaudeModel(value.replace("anthropic-", ""));
+      modelPickerLogger.info("Selected Claude model", {
+        modelProvider: "anthropic",
+        modelId: selectedModel.id,
+      });
+      setModelProvider("anthropic");
+      setModelId(selectedModel.id);
+      setSelectedModel("anthropic", selectedModel.id);
       return;
     }
 
@@ -299,6 +350,27 @@ export function ModelPicker({
               >
                 <div className="flex min-w-0 max-w-full items-center gap-3">
                   <Bot className="h-4 w-4 flex-shrink-0" />
+                  <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+                    <span className="truncate text-sm">{model.label}</span>
+                    <span className="line-clamp-2 whitespace-normal break-words text-xs leading-snug text-muted-foreground">
+                      {model.description}
+                    </span>
+                  </div>
+                </div>
+              </SelectItem>
+            ))}
+          </SelectGroup>
+
+          <SelectGroup>
+            <SelectLabel>Claude (Anthropic)</SelectLabel>
+            {CLAUDE_MODELS.map((model) => (
+              <SelectItem
+                key={model.id}
+                value={`anthropic-${model.id}`}
+                className="overflow-hidden"
+              >
+                <div className="flex min-w-0 max-w-full items-center gap-3">
+                  <Sparkles className="h-4 w-4 flex-shrink-0" />
                   <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
                     <span className="truncate text-sm">{model.label}</span>
                     <span className="line-clamp-2 whitespace-normal break-words text-xs leading-snug text-muted-foreground">

@@ -1,8 +1,9 @@
 import { env } from "@/env";
 import { createLogger } from "@/lib/observability/logger";
+import { ChatAnthropic } from "@langchain/anthropic";
 import { ChatOpenAI } from "@langchain/openai";
 
-type ModelProvider = "openai" | "ollama" | "lmstudio";
+type ModelProvider = "openai" | "ollama" | "lmstudio" | "anthropic";
 const modelLogger = createLogger("model-picker");
 const OLLAMA_BASE_URL = "http://localhost:11434";
 const OLLAMA_TAGS_URL = `${OLLAMA_BASE_URL}/api/tags`;
@@ -55,7 +56,12 @@ function extractLMStudioModelIds(payload: unknown): string[] {
 }
 
 function isModelProvider(value: string): value is ModelProvider {
-  return value === "openai" || value === "ollama" || value === "lmstudio";
+  return (
+    value === "openai" ||
+    value === "ollama" ||
+    value === "lmstudio" ||
+    value === "anthropic"
+  );
 }
 
 function resolveModelSelection(
@@ -300,6 +306,17 @@ export function assertModelIsConfigured(
     );
   }
 
+  if (selection.provider === "anthropic" && !env.ANTHROPIC_API_KEY?.trim()) {
+    modelLogger.error("Model configuration failed", undefined, {
+      provider: selection.provider,
+      modelId: selection.modelId || "claude-opus-4-8",
+      reason: "missing_anthropic_api_key",
+    });
+    throw new Error(
+      "ANTHROPIC_API_KEY is required when using a Claude (Anthropic) model.",
+    );
+  }
+
   modelLogger.info("Model configuration validated", {
     provider: selection.provider,
     modelId:
@@ -372,6 +389,25 @@ export function modelPicker(modelProviderOrModel: string, modelId?: string) {
       configuration: {
         baseURL: `${OLLAMA_BASE_URL}/v1`,
       },
+    });
+  }
+
+  if (selection.provider === "anthropic") {
+    // Native Claude via the official Anthropic SDK (wrapped by ChatAnthropic).
+    // ANTHROPIC_MODEL overrides the UI selection so every generation path can
+    // run on one Claude model; defaults to Opus 4.8.
+    const claudeModel =
+      env.ANTHROPIC_MODEL?.trim() || selection.modelId || "claude-opus-4-8";
+
+    modelLogger.info("Creating Anthropic model client", {
+      provider: selection.provider,
+      modelId: claudeModel,
+      hasApiKey: Boolean(env.ANTHROPIC_API_KEY?.trim()),
+    });
+
+    return new ChatAnthropic({
+      model: claudeModel,
+      apiKey: env.ANTHROPIC_API_KEY?.trim(),
     });
   }
 

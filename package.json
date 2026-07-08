@@ -42,6 +42,7 @@
     "@fortawesome/free-solid-svg-icons": "^6.7.2",
     "@fortawesome/react-fontawesome": "^0.2.2",
     "@hookform/resolvers": "^3.10.0",
+    "@langchain/anthropic": "^1.5.1",
     "@langchain/core": "1.1.42",
     "@langchain/langgraph": "^1.2.3",
     "@langchain/langgraph-checkpoint-postgres": "^1.0.1",

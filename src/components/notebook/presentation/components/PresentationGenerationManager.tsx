@@ -40,7 +40,7 @@ interface PresentationOutlineMessageMetadata {
   numberOfCards: number;
   language: string;
   modelId: string;
-  modelProvider: "openai" | "ollama" | "lmstudio";
+  modelProvider: "openai" | "ollama" | "lmstudio" | "anthropic";
   webSearch: boolean;
   autoTheme: boolean;
   presentationId: string | null;
