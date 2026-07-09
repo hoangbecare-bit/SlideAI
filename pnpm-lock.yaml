@@ -86,6 +86,9 @@ importers:
       '@langchain/core':
         specifier: 1.1.42
         version: 1.1.42(@opentelemetry/api@1.9.0)(openai@6.39.1(zod@3.25.76))
+      '@langchain/google-genai':
+        specifier: ^1.0.2
+        version: 1.0.2(@langchain/core@1.1.42(@opentelemetry/api@1.9.0)(openai@6.39.1(zod@3.25.76)))
       '@langchain/langgraph':
         specifier: ^1.2.3
         version: 1.2.3(@langchain/core@1.1.42(@opentelemetry/api@1.9.0)(openai@6.39.1(zod@3.25.76)))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(zod@3.25.76)
@@ -981,6 +984,10 @@ packages:
       '@fortawesome/fontawesome-svg-core': ~1 || ~6
       react: '>=16.3'
 
+  '@google/generative-ai@0.24.1':
+    resolution: {integrity: sha512-MqO+MLfM6kjxcKoy0p1wRzG3b4ZZXtPI+z2IE26UogS2Cm/XHO+7gGRBh6gcJsOiIVoH93UwKvW4HdgiOZCy9Q==}
+    engines: {node: '>=18.0.0'}
+
   '@hono/node-server@1.19.11':
     resolution: {integrity: sha512-dr8/3zEaB+p0D2n/IUrlPF1HZm586qgJNXK1a9fhg/PzdtkK7Ksd5l312tJX2yBuALqDYBlG20QEbayqPyxn+g==}
     engines: {node: '>=18.14.1'}
@@ -1190,6 +1197,12 @@ packages:
   '@langchain/core@1.1.42':
     resolution: {integrity: sha512-d0tN96BrwPMryYyWR9VfyAntSivn7EQrZCe5Kpxum93tcjTXbKKmKvItFec8AluQt88iTcmAJrahUZUNfzGwTA==}
     engines: {node: '>=20'}
+
+  '@langchain/google-genai@1.0.2':
+    resolution: {integrity: sha512-qlV5zBRq8JJ6nBZKQuI0Adjgb4ERqSYvEYTyvkYZfymFwLrEYXmy9/Nogpqxsem5UDLy8yCqW8kxRXVZrzeu8Q==}
+    engines: {node: '>=20'}
+    peerDependencies:
+      '@langchain/core': ^1.0.0
 
   '@langchain/langgraph-checkpoint-postgres@1.0.1':
     resolution: {integrity: sha512-cRXOLYZc0egMjyAQfBblWXdoBS+WKwEbCEuE+/f88XHJ1bq5jVz7aycbpjF/7F5EykG7xmybQOz5eUdg3neRzg==}
@@ -7251,6 +7264,8 @@ snapshots:
       prop-types: 15.8.1
       react: 19.2.4
 
+  '@google/generative-ai@0.24.1': {}
+
   '@hono/node-server@1.19.11(hono@4.12.23)':
     dependencies:
       hono: 4.12.23
@@ -7418,6 +7433,12 @@ snapshots:
       - '@opentelemetry/sdk-trace-base'
       - openai
       - ws
+
+  '@langchain/google-genai@1.0.2(@langchain/core@1.1.42(@opentelemetry/api@1.9.0)(openai@6.39.1(zod@3.25.76)))':
+    dependencies:
+      '@google/generative-ai': 0.24.1
+      '@langchain/core': 1.1.42(@opentelemetry/api@1.9.0)(openai@6.39.1(zod@3.25.76))
+      uuid: 11.1.0
 
   '@langchain/langgraph-checkpoint-postgres@1.0.1(@langchain/core@1.1.42(@opentelemetry/api@1.9.0)(openai@6.39.1(zod@3.25.76)))(@langchain/langgraph-checkpoint@1.0.1(@langchain/core@1.1.42(@opentelemetry/api@1.9.0)(openai@6.39.1(zod@3.25.76))))':
     dependencies:

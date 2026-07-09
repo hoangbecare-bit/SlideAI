@@ -1,9 +1,15 @@
 import { env } from "@/env";
 import { createLogger } from "@/lib/observability/logger";
 import { ChatAnthropic } from "@langchain/anthropic";
+import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { ChatOpenAI } from "@langchain/openai";
 
-type ModelProvider = "openai" | "ollama" | "lmstudio" | "anthropic";
+type ModelProvider =
+  | "openai"
+  | "ollama"
+  | "lmstudio"
+  | "anthropic"
+  | "google";
 const modelLogger = createLogger("model-picker");
 const OLLAMA_BASE_URL = "http://localhost:11434";
 const OLLAMA_TAGS_URL = `${OLLAMA_BASE_URL}/api/tags`;
@@ -60,7 +66,8 @@ function isModelProvider(value: string): value is ModelProvider {
     value === "openai" ||
     value === "ollama" ||
     value === "lmstudio" ||
-    value === "anthropic"
+    value === "anthropic" ||
+    value === "google"
   );
 }
 
@@ -274,6 +281,7 @@ async function ensureLMStudioModelIsReady(modelId: string): Promise<void> {
 export function assertModelIsConfigured(
   modelProviderOrModel: string,
   modelId?: string,
+  apiKey?: string,
 ) {
   const selection = resolveModelSelection(modelProviderOrModel, modelId);
   const selectedOpenAIModel = selection.modelId || "gpt-4o-mini";
@@ -306,14 +314,33 @@ export function assertModelIsConfigured(
     );
   }
 
-  if (selection.provider === "anthropic" && !env.ANTHROPIC_API_KEY?.trim()) {
+  if (
+    selection.provider === "anthropic" &&
+    !apiKey?.trim() &&
+    !env.ANTHROPIC_API_KEY?.trim()
+  ) {
     modelLogger.error("Model configuration failed", undefined, {
       provider: selection.provider,
       modelId: selection.modelId || "claude-opus-4-8",
       reason: "missing_anthropic_api_key",
     });
     throw new Error(
-      "ANTHROPIC_API_KEY is required when using a Claude (Anthropic) model.",
+      "A Claude API key is required. Paste your Anthropic API key in the model picker.",
+    );
+  }
+
+  if (
+    selection.provider === "google" &&
+    !apiKey?.trim() &&
+    !env.GEMINI_API_KEY?.trim()
+  ) {
+    modelLogger.error("Model configuration failed", undefined, {
+      provider: selection.provider,
+      modelId: selection.modelId || "gemini-2.5-flash",
+      reason: "missing_gemini_api_key",
+    });
+    throw new Error(
+      "A Gemini API key is required. Paste your Google AI Studio API key in the model picker.",
     );
   }
 
@@ -349,7 +376,11 @@ export async function ensureModelIsReady(
  * Centralized model picker for LangChain-based presentation routes.
  * Supports OpenAI and OpenAI-compatible local endpoints.
  */
-export function modelPicker(modelProviderOrModel: string, modelId?: string) {
+export function modelPicker(
+  modelProviderOrModel: string,
+  modelId?: string,
+  apiKey?: string,
+) {
   const selection = resolveModelSelection(modelProviderOrModel, modelId);
 
   if (selection.provider === "lmstudio") {
@@ -398,16 +429,39 @@ export function modelPicker(modelProviderOrModel: string, modelId?: string) {
     // run on one Claude model; defaults to Opus 4.8.
     const claudeModel =
       env.ANTHROPIC_MODEL?.trim() || selection.modelId || "claude-opus-4-8";
+    // BYOK: a key passed with the request wins over the server env var.
+    const claudeApiKey = apiKey?.trim() || env.ANTHROPIC_API_KEY?.trim();
 
     modelLogger.info("Creating Anthropic model client", {
       provider: selection.provider,
       modelId: claudeModel,
-      hasApiKey: Boolean(env.ANTHROPIC_API_KEY?.trim()),
+      hasApiKey: Boolean(claudeApiKey),
     });
 
     return new ChatAnthropic({
       model: claudeModel,
-      apiKey: env.ANTHROPIC_API_KEY?.trim(),
+      apiKey: claudeApiKey,
+    });
+  }
+
+  if (selection.provider === "google") {
+    // Native Gemini via Google Generative AI. GEMINI_MODEL overrides the UI
+    // selection so every generation path can run on one model; defaults to
+    // Gemini 2.5 Flash.
+    const geminiModel =
+      env.GEMINI_MODEL?.trim() || selection.modelId || "gemini-2.5-flash";
+    // BYOK: a key passed with the request wins over the server env var.
+    const geminiApiKey = apiKey?.trim() || env.GEMINI_API_KEY?.trim();
+
+    modelLogger.info("Creating Google Gemini model client", {
+      provider: selection.provider,
+      modelId: geminiModel,
+      hasApiKey: Boolean(geminiApiKey),
+    });
+
+    return new ChatGoogleGenerativeAI({
+      model: geminiModel,
+      apiKey: geminiApiKey,
     });
   }
 

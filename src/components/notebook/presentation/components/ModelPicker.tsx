@@ -16,7 +16,7 @@ import {
   useLocalModels,
 } from "@/hooks/presentation/useLocalModels";
 import { usePresentationState } from "@/states/presentation-state";
-import { Bot, Cpu, Loader2, Monitor, Sparkles } from "lucide-react";
+import { Bot, Cpu, Gem, Loader2, Monitor, Sparkles } from "lucide-react";
 import { useEffect, useRef } from "react";
 
 const modelPickerLogger = createLogger("client:model-picker");
@@ -113,13 +113,45 @@ function getClaudeModel(modelId: string) {
   );
 }
 
+const GEMINI_MODELS = [
+  {
+    id: "gemini-2.5-flash",
+    label: "Gemini 2.5 Flash",
+    description: "Fast, cost-efficient Google model for everyday drafts",
+  },
+  {
+    id: "gemini-2.5-pro",
+    label: "Gemini 2.5 Pro",
+    description: "Google's most capable model for complex presentations",
+  },
+  {
+    id: "gemini-2.5-flash-lite",
+    label: "Gemini 2.5 Flash-Lite",
+    description: "Fastest, lowest-cost Gemini model",
+  },
+] as const;
+
+function getGeminiModel(modelId: string) {
+  return (
+    GEMINI_MODELS.find((model) => model.id === modelId) ?? GEMINI_MODELS[0]
+  );
+}
+
 export function ModelPicker({
   shouldShowLabel = true,
 }: {
   shouldShowLabel?: boolean;
 }) {
-  const { modelProvider, setModelProvider, modelId, setModelId } =
-    usePresentationState();
+  const {
+    modelProvider,
+    setModelProvider,
+    modelId,
+    setModelId,
+    anthropicApiKey,
+    setAnthropicApiKey,
+    googleApiKey,
+    setGoogleApiKey,
+  } = usePresentationState();
 
   const { data: modelsData, isLoading, isInitialLoad } = useLocalModels();
   const hasRestoredFromStorage = useRef(false);
@@ -137,7 +169,8 @@ export function ModelPicker({
             | "openai"
             | "ollama"
             | "lmstudio"
-            | "anthropic",
+            | "anthropic"
+            | "google",
         );
         setModelId(savedModel.modelId);
       }
@@ -192,6 +225,10 @@ export function ModelPicker({
       return `anthropic-${getClaudeModel(modelId).id}`;
     }
 
+    if (modelProvider === "google") {
+      return `google-${getGeminiModel(modelId).id}`;
+    }
+
     return `openai-${getOpenAIModel(modelId).id}`;
   };
 
@@ -210,6 +247,13 @@ export function ModelPicker({
       return {
         label: getClaudeModel(modelId).label,
         icon: Sparkles,
+      };
+    }
+
+    if (modelProvider === "google") {
+      return {
+        label: getGeminiModel(modelId).label,
+        icon: Gem,
       };
     }
 
@@ -260,6 +304,18 @@ export function ModelPicker({
       setModelProvider("anthropic");
       setModelId(selectedModel.id);
       setSelectedModel("anthropic", selectedModel.id);
+      return;
+    }
+
+    if (value.startsWith("google-")) {
+      const selectedModel = getGeminiModel(value.replace("google-", ""));
+      modelPickerLogger.info("Selected Gemini model", {
+        modelProvider: "google",
+        modelId: selectedModel.id,
+      });
+      setModelProvider("google");
+      setModelId(selectedModel.id);
+      setSelectedModel("google", selectedModel.id);
       return;
     }
 
@@ -371,6 +427,27 @@ export function ModelPicker({
               >
                 <div className="flex min-w-0 max-w-full items-center gap-3">
                   <Sparkles className="h-4 w-4 flex-shrink-0" />
+                  <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+                    <span className="truncate text-sm">{model.label}</span>
+                    <span className="line-clamp-2 whitespace-normal break-words text-xs leading-snug text-muted-foreground">
+                      {model.description}
+                    </span>
+                  </div>
+                </div>
+              </SelectItem>
+            ))}
+          </SelectGroup>
+
+          <SelectGroup>
+            <SelectLabel>Gemini (Google)</SelectLabel>
+            {GEMINI_MODELS.map((model) => (
+              <SelectItem
+                key={model.id}
+                value={`google-${model.id}`}
+                className="overflow-hidden"
+              >
+                <div className="flex min-w-0 max-w-full items-center gap-3">
+                  <Gem className="h-4 w-4 flex-shrink-0" />
                   <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
                     <span className="truncate text-sm">{model.label}</span>
                     <span className="line-clamp-2 whitespace-normal break-words text-xs leading-snug text-muted-foreground">
@@ -496,6 +573,30 @@ export function ModelPicker({
           )}
         </SelectContent>
       </Select>
+
+      {modelProvider === "anthropic" && (
+        <input
+          type="password"
+          value={anthropicApiKey}
+          onChange={(event) => setAnthropicApiKey(event.target.value)}
+          placeholder="Paste your Claude API key (sk-ant-...)"
+          autoComplete="off"
+          spellCheck={false}
+          className="mt-2 h-8 w-full rounded-full border border-border bg-background px-3 text-[13px] text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+        />
+      )}
+
+      {modelProvider === "google" && (
+        <input
+          type="password"
+          value={googleApiKey}
+          onChange={(event) => setGoogleApiKey(event.target.value)}
+          placeholder="Paste your Gemini API key (AIza...)"
+          autoComplete="off"
+          spellCheck={false}
+          className="mt-2 h-8 w-full rounded-full border border-border bg-background px-3 text-[13px] text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+        />
+      )}
     </div>
   );
 }

@@ -40,7 +40,8 @@ interface PresentationOutlineMessageMetadata {
   numberOfCards: number;
   language: string;
   modelId: string;
-  modelProvider: "openai" | "ollama" | "lmstudio" | "anthropic";
+  modelProvider: "openai" | "ollama" | "lmstudio" | "anthropic" | "google";
+  apiKey?: string;
   webSearch: boolean;
   autoTheme: boolean;
   presentationId: string | null;
@@ -110,6 +111,8 @@ export function PresentationGenerationManager() {
     language,
     modelId,
     modelProvider,
+    anthropicApiKey,
+    googleApiKey,
     presentationInput,
     shouldStartOutlineGeneration,
     shouldStartPresentationGeneration,
@@ -512,6 +515,12 @@ export function PresentationGenerationManager() {
               language,
               modelId,
               modelProvider,
+              apiKey:
+                modelProvider === "anthropic"
+                  ? anthropicApiKey
+                  : modelProvider === "google"
+                    ? googleApiKey
+                    : undefined,
               webSearch: webSearchEnabled,
               autoTheme: autoThemeEnabled,
               presentationId: currentPresentationId,
@@ -776,6 +785,11 @@ export function PresentationGenerationManager() {
           tone: tone,
           modelId,
           modelProvider,
+          apiKey: modelProvider === "anthropic"
+                  ? anthropicApiKey
+                  : modelProvider === "google"
+                    ? googleApiKey
+                    : undefined,
           textContent,
           audience,
           scenario,
@@ -828,6 +842,11 @@ export function PresentationGenerationManager() {
           language,
           modelId,
           modelProvider,
+          apiKey: modelProvider === "anthropic"
+                  ? anthropicApiKey
+                  : modelProvider === "google"
+                    ? googleApiKey
+                    : undefined,
         },
       });
     }

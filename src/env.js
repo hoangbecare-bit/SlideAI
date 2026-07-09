@@ -17,6 +17,9 @@ export const env = createEnv({
     // Claude / Anthropic API (used when the "anthropic" model provider is picked).
     ANTHROPIC_API_KEY: z.string().optional(),
     ANTHROPIC_MODEL: z.string().optional(),
+    // Gemini / Google Generative AI (used when the "google" model provider is picked).
+    GEMINI_API_KEY: z.string().optional(),
+    GEMINI_MODEL: z.string().optional(),
     GOOGLE_CUSTOM_SEARCH_API_KEY: z.string().optional(),
     SEARCH_ENGINE_CX: z.string().optional(),
     TOGETHER_AI_API_KEY: z.string().optional(),
@@ -47,6 +50,8 @@ export const env = createEnv({
     OPENAI_MODEL: process.env.OPENAI_MODEL,
     ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
     ANTHROPIC_MODEL: process.env.ANTHROPIC_MODEL,
+    GEMINI_API_KEY: process.env.GEMINI_API_KEY,
+    GEMINI_MODEL: process.env.GEMINI_MODEL,
     GOOGLE_CUSTOM_SEARCH_API_KEY: process.env.GOOGLE_CUSTOM_SEARCH_API_KEY,
     SEARCH_ENGINE_CX: process.env.SEARCH_ENGINE_CX,
     TOGETHER_AI_API_KEY: process.env.TOGETHER_AI_API_KEY,

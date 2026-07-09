@@ -104,7 +104,7 @@ type PendingPresentationCreateRequest = {
   attachments?: NotebookAttachment[];
   language: string;
   modelId: string;
-  modelProvider: "openai" | "ollama" | "lmstudio" | "anthropic";
+  modelProvider: "openai" | "ollama" | "lmstudio" | "anthropic" | "google";
   numSlides: number;
   generationAspectRatio?: PresentationGenerationAspectRatio;
   outputFormat?: "flow" | "html";
@@ -129,8 +129,12 @@ interface PresentationState {
   themeDataByTheme: Record<string, ThemeProperties | null | undefined>;
   generatedThemeData: ThemeProperties | null;
   language: string;
-  modelProvider: "openai" | "ollama" | "lmstudio" | "anthropic";
+  modelProvider: "openai" | "ollama" | "lmstudio" | "anthropic" | "google";
   modelId: string;
+  // BYOK: user-supplied Anthropic key, sent per-request (never stored server-side).
+  anthropicApiKey: string;
+  // BYOK: user-supplied Gemini key, sent per-request (never stored server-side).
+  googleApiKey: string;
   pageStyle: string;
   presentationInput: string;
   imageModel: ImageModelList;
@@ -257,8 +261,10 @@ interface PresentationState {
   thumbnailUrl?: string;
   setThumbnailUrl: (url: string | undefined) => void;
   setLanguage: (lang: string) => void;
-  setModelProvider: (provider: "openai" | "ollama" | "lmstudio" | "anthropic") => void;
+  setModelProvider: (provider: "openai" | "ollama" | "lmstudio" | "anthropic" | "google") => void;
   setModelId: (id: string) => void;
+  setAnthropicApiKey: (key: string) => void;
+  setGoogleApiKey: (key: string) => void;
   setPageStyle: (style: string) => void;
   setPresentationInput: (input: string) => void;
   setOutline: (topics: string[]) => void;
@@ -548,6 +554,8 @@ export const usePresentationState = create<PresentationState>()(
       language: "en-US",
       modelProvider: "openai",
       modelId: "gpt-4o-mini",
+      anthropicApiKey: "",
+      googleApiKey: "",
       pageStyle: "default",
       presentationInput: "",
       outline: [],
@@ -1069,6 +1077,8 @@ export const usePresentationState = create<PresentationState>()(
       setLanguage: (lang) => set({ language: lang }),
       setModelProvider: (provider) => set({ modelProvider: provider }),
       setModelId: (id) => set({ modelId: id }),
+      setAnthropicApiKey: (key) => set({ anthropicApiKey: key }),
+      setGoogleApiKey: (key) => set({ googleApiKey: key }),
       setTheme: (theme, customData, type) => {
         set((state) => {
           let nextCustomThemeData: ThemeProperties | null;
@@ -1387,6 +1397,17 @@ export const usePresentationState = create<PresentationState>()(
     {
       name: "presentation-state",
       storage: createJSONStorage(() => localStorage),
+      // Transient generation triggers must never survive a reload. A pre-fix
+      // build persisted them; clear any stale `true` so a stuck flag can't
+      // dead-lock the "Generate" button (set-to-same-value won't re-fire the effect).
+      onRehydrateStorage: () => (state) => {
+        if (!state) return;
+        state.shouldStartOutlineGeneration = false;
+        state.shouldStartPresentationGeneration = false;
+        state.shouldStartImageSlideGeneration = false;
+        state.isGeneratingOutline = false;
+        state.isGeneratingPresentation = false;
+      },
       partialize: (state) => ({
         attachedFiles: state.attachedFiles,
         audience: state.audience,
@@ -1405,6 +1426,8 @@ export const usePresentationState = create<PresentationState>()(
         imageSearchResults: state.imageSearchResults,
         imageSource: state.imageSource,
         language: state.language,
+        anthropicApiKey: state.anthropicApiKey,
+        googleApiKey: state.googleApiKey,
         numSlides: state.numSlides,
         outline: state.outline,
         outlineItemIds: state.outlineItemIds,
@@ -1420,10 +1443,6 @@ export const usePresentationState = create<PresentationState>()(
         searchResults: state.searchResults,
         selectedChunks: state.selectedChunks,
         selectedSlideTemplates: state.selectedSlideTemplates,
-        shouldStartImageSlideGeneration: state.shouldStartImageSlideGeneration,
-        shouldStartOutlineGeneration: state.shouldStartOutlineGeneration,
-        shouldStartPresentationGeneration:
-          state.shouldStartPresentationGeneration,
         stockImageProvider: state.stockImageProvider,
         textContent: state.textContent,
         theme: state.theme,

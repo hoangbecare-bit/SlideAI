@@ -20,7 +20,8 @@ import { auth } from "@/server/auth";
 
 type SlidesRequest = Omit<PresentationGenerationPromptInput, "currentDate"> & {
   modelId?: string;
-  modelProvider?: "openai" | "ollama" | "lmstudio" | "anthropic";
+  modelProvider?: "openai" | "ollama" | "lmstudio" | "anthropic" | "google";
+  apiKey?: string;
   presentationId?: string;
   slidePlan?: string;
 };
@@ -40,7 +41,7 @@ export async function POST(req: Request) {
     }
 
     const request = (await req.json()) as SlidesRequest;
-    const { modelId, modelProvider = "openai" } = request;
+    const { modelId, modelProvider = "openai", apiKey } = request;
 
     if (
       !request.title ||
@@ -90,7 +91,7 @@ export async function POST(req: Request) {
     });
 
     try {
-      assertModelIsConfigured(modelProvider, modelId);
+      assertModelIsConfigured(modelProvider, modelId, apiKey);
     } catch (error) {
       routeLogger.error(
         "Presentation generation request rejected: invalid model configuration",
@@ -135,7 +136,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const model = modelPicker(modelProvider, modelId);
+    const model = modelPicker(modelProvider, modelId, apiKey);
     let slidePlan = "";
 
     try {
