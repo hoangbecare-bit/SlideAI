@@ -359,7 +359,26 @@ export function PresentationGenerationManager() {
   } = useChat({
     transport: outlineTransportRef.current,
 
-    onFinish: () => {
+    onFinish: (options) => {
+      // "Think then burst" models (e.g. Gemini 2.5) deliver the whole outline in
+      // the final chunk, so the requestAnimationFrame that commits parsed items
+      // to state may not have run yet when onFinish fires — the empty-outline
+      // guard below would then false-trigger even though parsing succeeded.
+      // Re-parse the final messages and flush the buffers synchronously.
+      const finalMessages =
+        options && Array.isArray(options.messages)
+          ? options.messages
+          : outlineMessages;
+      processMessages(finalMessages);
+      if (searchResultsBufferRef.current !== null) {
+        setSearchResults(searchResultsBufferRef.current);
+        searchResultsBufferRef.current = null;
+      }
+      if (outlineBufferRef.current !== null) {
+        setOutline(outlineBufferRef.current);
+        outlineBufferRef.current = null;
+      }
+
       const {
         currentPresentationId,
         outline,
