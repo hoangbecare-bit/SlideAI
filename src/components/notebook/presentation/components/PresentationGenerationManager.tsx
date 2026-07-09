@@ -364,7 +364,8 @@ export function PresentationGenerationManager() {
       // the final chunk, so the requestAnimationFrame that commits parsed items
       // to state may not have run yet when onFinish fires — the empty-outline
       // guard below would then false-trigger even though parsing succeeded.
-      // Re-parse the final messages and flush the buffers synchronously.
+      // Re-parse the final messages synchronously and commit the outline directly
+      // (authoritative), independent of the streaming buffer/RAF path.
       const finalMessages =
         options && Array.isArray(options.messages)
           ? options.messages
@@ -374,10 +375,37 @@ export function PresentationGenerationManager() {
         setSearchResults(searchResultsBufferRef.current);
         searchResultsBufferRef.current = null;
       }
-      if (outlineBufferRef.current !== null) {
-        setOutline(outlineBufferRef.current);
-        outlineBufferRef.current = null;
+
+      // Derive the outline straight from the final assistant message so the
+      // guard below can never lose a race against the RAF commit.
+      const lastAssistant = [...finalMessages]
+        .reverse()
+        .find((message) => message.role === "assistant");
+      const finalAssistantText = lastAssistant
+        ? getMessageText(lastAssistant)
+        : "";
+      const { cleanContent: outlineBody } = extractTitle(finalAssistantText);
+      const finalOutlineItems = parseOutlineItems(
+        extractGeneratedPresentationTheme(outlineBody).cleanContent,
+      );
+      const committedOutline =
+        finalOutlineItems.length > 0
+          ? finalOutlineItems
+          : (outlineBufferRef.current ?? []);
+      if (committedOutline.length > 0) {
+        setOutline(committedOutline);
       }
+      outlineBufferRef.current = null;
+
+      // Diagnostic: pinpoints why an outline came back empty (model returned no
+      // text, text had no "# " headings, or a parse/theme-strip edge case).
+      generationLogger.info("Presentation outline onFinish parse", {
+        assistantTextLength: finalAssistantText.length,
+        hasHeading: /^#{1,6}[ \t]+/m.test(finalAssistantText),
+        parsedItems: finalOutlineItems.length,
+        isError: Boolean(options?.isError),
+        textPreview: finalAssistantText.slice(0, 200),
+      });
 
       const {
         currentPresentationId,

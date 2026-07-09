@@ -351,7 +351,17 @@ export async function POST(req: Request) {
     });
     span.event("allweone.api.response_stream_created");
     return createUIMessageStreamResponse({
-      stream: toUIMessageStream(stream),
+      // Log any mid-stream model/agent failure server-side so a request that
+      // returns 200 but errors partway is diagnosable in the route logs.
+      stream: toUIMessageStream(stream, {
+        onError: (error) => {
+          routeLogger.error("Presentation outline stream error", error, {
+            requestId,
+            modelProvider,
+            modelId: modelId || "gpt-4o-mini",
+          });
+        },
+      }),
     });
   } catch (error) {
     routeLogger.error("Presentation outline generation failed", error, {
